@@ -14,8 +14,8 @@
 
 ### User Story 1 - Configure Objective and Measure Discovery Efficiency (Priority: P1)
 
-A scientist sets the scientific objective (target band gap window 1.2-1.8 eV, optionally with
-ehull below 0.1 eV/atom), the evaluation budget (300 evaluations in 6 rounds of 50), and the
+A scientist sets the scientific objective (target band gap window 1.0-2.0 eV; the ehull stability filter is disabled by default after measurement showed
+it shrinks the target set to ~0.6%), the evaluation budget (300 evaluations in 6 rounds of 50), and the
 candidate pool, then runs the core benchmark. Because true property labels exist but are
 hidden, "revealing a label" simulates a costly DFT experiment and costs budget. The system
 reports how many evaluations each search strategy (random, greedy, uncertainty) needs to find
@@ -136,7 +136,7 @@ context from the record alone.
 
 ### Functional Requirements
 
-- **FR-001**: The system MUST let the scientist configure the scientific objective: target property, target window (default band gap 1.2-1.8 eV with optional stability filter), evaluation budget (default 300, in 6 rounds of 50), and pool size (default subsample of 10-20k with fixed seed).
+- **FR-001**: The system MUST let the scientist configure the scientific objective: target property, target window (default band gap 1.0-2.0 eV; ehull stability filter available but off by default), evaluation budget (default 300, in 6 rounds of 50), and pool size (default subsample of 10-20k with fixed seed).
 - **FR-002**: The system MUST maintain property labels behind an enforced accountant ("oracle"): reveals cost one budget unit each, over-budget and duplicate reveals are refused, and no code path exposes unrevealed labels — verified by an automated leak test.
 - **FR-003**: The system MUST define the top set (~5% of pool) from the objective and report pool size, top-set size, and fraction before experimentation.
 - **FR-004**: The system MUST run four comparable search arms under identical seeds and budgets: random, greedy (top predicted-in-window), uncertainty (highest-model-variance), and agentic (planner-adaptive). All arms begin with a random seeding batch of 50 so predictions start with data.
@@ -189,7 +189,7 @@ context from the record alone.
 
 - The JARVIS `dft_3d` dataset is downloadable publicly and a 10-20k-row subsample is sufficient to expose measurable differences among strategies.
 - "Expensive evaluation" is simulated by budget-costly label revelation; this retrospective proxy is stated honestly rather than claimed as a new physical discovery.
-- The default target window (1.2-1.8 eV) yields roughly a 5% top-set fraction; if the observed fraction deviates substantially, the window is adjusted before runs and noted.
+- The default target window is 1.0-2.0 eV without ehull filtering, which measured 5.83% of a seeded 15k pool on 2026-10-04 (with ehull<0.1 the overlap is ~0.63% regardless of window — ehull is therefore reported post-hoc on the shortlist instead).
 - Composition-only (no structure) features are sufficient for the predictive model to beat random; otherwise the window/features are tuned before agents are built (explicit decision gate before hour 9).
 - Cached literature responses replace live calls under failure/rate limits without loss of claim verifiability.
 - "At least 10 seeds" is the minimum; more is acceptable when runtime allows thanks to caching.

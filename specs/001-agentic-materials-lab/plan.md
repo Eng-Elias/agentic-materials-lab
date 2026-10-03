@@ -7,7 +7,7 @@
 ## Summary
 
 Build a 24-hour closed-loop agentic lab that searches NIST JARVIS `dft_3d` for materials with
-band gap in 1.2-1.8 eV using as few simulated expensive evaluations (budget-enforced label
+band gap in 1.0-2.0 eV using as few simulated expensive evaluations (budget-enforced label
 reveals) as possible. Technical approach: a science core (data loader, budget-enforced oracle,
 RandomForest surrogate with tree-variance uncertainty, four acquisition strategies, Pydantic
 handoff contracts, append-only JSONL record) plus an Omnigent-orchestrated 7-agent workflow

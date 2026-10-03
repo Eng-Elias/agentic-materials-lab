@@ -14,8 +14,8 @@ Runs the non-agentic arms.
 | `--budget N` | int | 300 | total evaluations budget |
 | `--rounds N` | int | 6 | rounds per run (batch = budget // rounds) |
 | `--pool N` | int | 15000 | subsample size |
-| `--gap-min F` / `--gap-max F` | float | 1.2 / 1.8 | target window (eV) |
-| `--ehull-max F` | float | 0.1 | optional stability filter (eV/atom); negative to disable |
+| `--gap-min F` / `--gap-max F` | float | 1.0 / 2.0 | target window (eV) |
+| `--ehull-max F` | float | -1 (disabled) | optional stability filter (eV/atom); set ≥0 (e.g. 0.1) to enable |
 | `--arms` | csv | `random,greedy,uncertainty` | subset allowed |
 | `--quick` | flag | off | 2 seeds × tiny pool for smoke tests / fresh-clone check |
 | `--out DIR` | path | `results/` | output directory |

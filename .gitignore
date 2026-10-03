@@ -1,2 +1,11 @@
 .venv/
 __pycache__/
+*.pyc
+cache/lit/*.json
+cache/llm/*.json
+cache/dft_3d.pkl
+results/*.csv
+results/*.png
+results/shortlist.json
+records/refutation_example.jsonl
+docs/data_fields_probe.txt

@@ -76,7 +76,8 @@ reproduction, verified by a fresh-clone test before submission.
 
 ### VIII. Scope Discipline
 
-One dataset (JARVIS `dft_3d`), one target property (band gap in the 1.2–1.8 eV window),
+One dataset (JARVIS `dft_3d`), one target property (band gap in a configured eV window,
+default 1.0–2.0 eV),
 one discovery loop. Out of scope: graph neural networks, real DFT, vector databases, and
 any agent framework besides Omnigent. Feature additions MUST be refused once frozen at the
 hour-19 code freeze.
@@ -101,8 +102,12 @@ oracle budget enforcement. Broader coverage is welcome only after these three pa
   element-property statistics), scikit-learn/LightGBM surrogates, Pydantic, matplotlib, pytest.
 - Budget: 300 evaluations total, in 6 rounds of 50; every arm (random, greedy, uncertainty,
   agentic) runs the same seeds and budget. Arms are seeded with a random batch of 50 in round 0.
-- Top set: materials with band gap in [1.2, 1.8] eV (optionally ehull < 0.1 eV/atom), targeting
-  ~5% of the candidate pool; pool subsampled to 10–20k rows with a fixed seed.
+- Top set: materials with band gap in [1.0, 2.0] eV, no ehull filter. Amendment rationale
+  (measured 2026-10-04): ehull < 0.1 overlaps ANY plausible solar window at only ~0.6–1% of
+  dft_3d (stable materials are ~7% of the whole dataset), too sparse for meaningful ≥10-seed
+  statistics. Target fraction ~5% (measured 5.83% on a seeded 15k pool). Ehull is reported
+  post-hoc on the final shortlist by the Analysis agent instead.
+  Pool subsampled to 10–20k rows with a fixed seed.
 - Metrics: hits vs. evaluations curve, evaluations to find 50% of the top set per arm, speedup
   (N_random / N_agentic) reported as mean ± std over ≥10 seeds, surrogate RMSE per round, and
   count of hypothesis reversals / strategy switches.
@@ -132,4 +137,4 @@ for clarifications — and (3) updating `LAST_AMENDED_DATE` below. Compliance re
 every quality gate above; oracle-affecting changes additionally require the human review stated
 in Principle II.
 
-**Version**: 1.0.0 | **Ratified**: 2026-10-04 | **Last Amended**: 2026-10-04
+**Version**: 1.0.1 | **Ratified**: 2026-10-04 | **Last Amended**: 2026-10-04
