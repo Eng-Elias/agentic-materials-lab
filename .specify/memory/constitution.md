@@ -108,9 +108,11 @@ oracle budget enforcement. Broader coverage is welcome only after these three pa
   statistics. Target fraction ~5% (measured 5.83% on a seeded 15k pool). Ehull is reported
   post-hoc on the final shortlist by the Analysis agent instead.
   Pool subsampled to 10–20k rows with a fixed seed.
-- Metrics: hits vs. evaluations curve, evaluations to find 50% of the top set per arm, speedup
-  (N_random / N_agentic) reported as mean ± std over ≥10 seeds, surrogate RMSE per round, and
-  count of hypothesis reversals / strategy switches.
+- Metrics: hits vs. evaluations curve, evaluations to reach fixed hit milestones
+  (5/10/15/20 hits) per arm, speedup (N_random / N_agentic at matched hit counts) reported as
+  mean ± std over ≥10 seeds, surrogate RMSE per round, and count of hypothesis reversals /
+  strategy switches. Note (measured 2026-10-04): 50%-of-top-set is unreachable inside the
+  300-eval budget with the ~5% top set (874 → 437 hits > 300), so milestones replace it.
 - LLM and literature API outputs MUST be cached to disk so multi-seed runs are cheap and fast.
 
 ## Development Workflow & Quality Gates
@@ -137,4 +139,4 @@ for clarifications — and (3) updating `LAST_AMENDED_DATE` below. Compliance re
 every quality gate above; oracle-affecting changes additionally require the human review stated
 in Principle II.
 
-**Version**: 1.0.1 | **Ratified**: 2026-10-04 | **Last Amended**: 2026-10-04
+**Version**: 1.0.2 | **Ratified**: 2026-10-04 | **Last Amended**: 2026-10-04

@@ -1,0 +1,5 @@
+arm,seed,round,evaluations,cumulative_hits,rmse
+greedy,0,1,50,2,
+greedy,0,2,100,14,0.2763579455289821
+greedy,1,1,50,3,
+greedy,1,2,100,10,0.29585164504866396

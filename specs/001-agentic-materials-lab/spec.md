@@ -147,7 +147,7 @@ context from the record alone.
 - **FR-009**: Every literature claim MUST carry a citation traceable to a cached real search response (DOI or URL); the system MUST prevent uncited claims from being reported as fact without approved override.
 - **FR-010**: Hypotheses MUST carry the AGENT-GENERATED label, a testable feature set, a predicted direction, and citation links; unlabeled hypotheses MUST be rejected by validation.
 - **FR-011**: Consequential actions (candidate recommendations for real synthesis/DFT, budget increases, reporting uncited claims as fact) MUST be blocked by enforced permissions/policies pending human approval; the runner MUST NOT possess such capabilities.
-- **FR-012**: The system MUST measure, per arm: hits vs evaluations curve, evaluations to reach 50% of the top set, and speedup (random evaluations / agentic evaluations at the same hit count) as mean ± std over ≥10 seeds; plus predictive error per round and strategy-switch counts.
+- **FR-012**: The system MUST measure, per arm: hits vs evaluations curve, evaluations to reach fixed hit milestones (5/10/15/20 hits — 50%-of-top-set is unreachable within the default 300-eval budget; see Assumptions), and speedup (random evaluations / agentic evaluations at matched hit counts) as mean ± std over ≥10 seeds; plus predictive error per round and strategy-switch counts.
 - **FR-013**: The system MUST support an ablation arm: the agentic loop with analysis feedback disabled, recorded distinctly.
 - **FR-014**: The system MUST produce a results table and hits-vs-evaluations plot including all arms and the ablation.
 - **FR-015**: The README MUST state limitations (retrospective benchmark, proxy/simulated experiment, composition features only, designed refutation scenario) and the validation still needed (DFT, then wet lab). Only measured numbers may be reported.
@@ -177,7 +177,7 @@ context from the record alone.
 ### Measurable Outcomes
 
 - **SC-001**: A reviewer completes full reproduction — baselines, the agentic loop, and all result figures — from a fresh clone with one command, at most one environment-setup step, and no manual data fixes, using only pinned dependencies and fixed seeds.
-- **SC-002**: All five arms' curves (random, greedy, uncertainty, agentic, ablation) over ≥10 seeds, plus strategy-switch counts and the 50%-of-top-set evaluations metric per arm, are produced and internally consistent with the logged record.
+- **SC-002**: All five arms' curves (random, greedy, uncertainty, agentic, ablation) over ≥10 seeds, plus strategy-switch counts and the hit-milestone evaluations metric per arm, are produced and internally consistent with the logged record.
 - **SC-003**: Speedup (random vs. agentic at equal hit count) is reported as mean ± std over ≥10 seeds exactly as measured — including if it is ≤ 1 — and every arm's deviation between repeated same-seed runs is zero.
 - **SC-004**: 100% of agent handoffs in the logged record validate against the handoff contract; 0 malformed messages are acted upon.
 - **SC-005**: The oracle leak test, budget-enforcement test, and handoff-contract test pass; 0 unrevealed labels are reachable through any agent, model output, or log (verified by test).
@@ -193,5 +193,6 @@ context from the record alone.
 - Composition-only (no structure) features are sufficient for the predictive model to beat random; otherwise the window/features are tuned before agents are built (explicit decision gate before hour 9).
 - Cached literature responses replace live calls under failure/rate limits without loss of claim verifiability.
 - "At least 10 seeds" is the minimum; more is acceptable when runtime allows thanks to caching.
+- With the default 300-eval budget and ~5% top set (874 of 15000), reaching 50% of the top set would need 437 hits > 300 budget; therefore comparisons use fixed hit milestones (5/10/15/20) and matched-hit-count speedups, measured 2026-10-04.
 - One scientist operating the lab is the primary user; reviewers read artifacts (README, results, log) afterwards.
 - The plan referenced as `docs/PLAN.md` is authored at the repository root as `Databricks: Agentic Scientific Discovery PLAN.md`.

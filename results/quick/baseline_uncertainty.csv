@@ -1,0 +1,5 @@
+arm,seed,round,evaluations,cumulative_hits,rmse
+uncertainty,0,1,50,2,
+uncertainty,0,2,100,9,0.2763579455289821
+uncertainty,1,1,50,3,
+uncertainty,1,2,100,5,0.29585164504866396

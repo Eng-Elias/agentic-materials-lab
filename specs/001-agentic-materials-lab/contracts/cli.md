@@ -49,7 +49,7 @@ Reads all result CSVs and produces the report artifacts.
 |---|---|---|---|
 | `--results DIR` | path | `results/` | input CSV directory |
 
-**Outputs**: `results/summary.csv` (per arm: seeds, evals-to-50%-of-top-set mean±std, total
+**Outputs**: `results/summary.csv` (per arm: seeds, evals-per-hit-milestone (5/10/15/20) mean±std, total
 hits-at-budget mean±std, speedup vs random mean±std, strategy switches) and
 `results/curves.png`. All reported numbers in the README originate ONLY from
 `results/summary.csv` (constitution Principle I).

@@ -28,7 +28,7 @@ python experiments/run_baselines.py --seeds 10
 python experiments/analyze_results.py
 ```
 
-Expected: `results/summary.csv` + `results/curves.png` showing random/greedy/uncertainty;
+Expected: `results/summary.csv` (with hit-milestone columns) + `results/curves.png` showing random/greedy/uncertainty;
 re-running one arm under the same seed produces byte-identical CSV rows; reported speedups
 come only from `summary.csv`.
 
