@@ -31,5 +31,6 @@ class Surrogate:
         from scipy.stats import norm
 
         mean, std = self.predict(X)
-        p = norm.cdf((hi - mean) / std) - norm.cdf((lo - mean) / std)
-        return pd.Series(p.to_numpy(), index=X.index).clip(0.0, 1.0)
+        p = norm.cdf(np.asarray((hi - mean) / std, dtype=float)) - norm.cdf(
+            np.asarray((lo - mean) / std, dtype=float))
+        return pd.Series(np.asarray(p, dtype=float), index=X.index).clip(0.0, 1.0)
