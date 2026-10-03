@@ -1,0 +1,44 @@
+name: runner_agent
+instructions: ../../agents/runner.md
+executor:
+  harness: claude-sdk
+  model: databricks-claude-sonnet-4-6
+  auth:
+    type: databricks
+    profile: oss
+os_env:
+  type: caller_process
+  cwd: ../../
+  sandbox:
+    type: none
+tools:
+  oracle_reveal:
+    type: function
+    description: budget-enforced label reveal
+    callable: src.tools_api.oracle_reveal
+    parameters:
+      type: object
+      properties:
+        ids:
+          type: array
+          items:
+            type: string
+      required:
+      - ids
+  train_surrogate:
+    type: function
+    description: fit surrogate on revealed labels
+    callable: src.tools_api.train_surrogate
+    parameters:
+      type: object
+      properties:
+        revealed:
+          type: object
+      required:
+      - revealed
+policies:
+  permissions:
+    type: function
+    handler: src.permissions.make_permission_policy
+    factory_params:
+      agent: runner

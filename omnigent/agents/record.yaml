@@ -1,0 +1,44 @@
+name: record_agent
+instructions: ../../agents/record.md
+executor:
+  harness: claude-sdk
+  model: databricks-claude-sonnet-4-6
+  auth:
+    type: databricks
+    profile: oss
+os_env:
+  type: caller_process
+  cwd: ../../
+  sandbox:
+    type: none
+tools:
+  append_record:
+    type: function
+    description: append to research log
+    callable: src.tools_api.append_record
+    parameters:
+      type: object
+      properties:
+        agent:
+          type: string
+        run_id:
+          type: string
+        seed:
+          type: integer
+        output:
+          type: object
+        citations:
+          type: array
+          items:
+            type: string
+      required:
+      - agent
+      - run_id
+      - seed
+      - output
+policies:
+  permissions:
+    type: function
+    handler: src.permissions.make_permission_policy
+    factory_params:
+      agent: record

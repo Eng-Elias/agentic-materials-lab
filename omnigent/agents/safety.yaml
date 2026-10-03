@@ -1,0 +1,52 @@
+name: safety_agent
+instructions: ../../agents/safety.md
+executor:
+  harness: claude-sdk
+  model: databricks-claude-sonnet-4-6
+  auth:
+    type: databricks
+    profile: oss
+os_env:
+  type: caller_process
+  cwd: ../../
+  sandbox:
+    type: none
+tools:
+  request_approval:
+    type: function
+    description: raise human approval request
+    callable: src.tools_api.request_approval
+    parameters:
+      type: object
+      properties:
+        action:
+          type: string
+          enum:
+          - recommend_for_validation
+          - budget_increase
+          - report_uncited_claim
+        justification:
+          type: string
+      required:
+      - action
+      - justification
+  recommend_for_validation:
+    type: function
+    description: APPROVAL-GATED recommend final shortlist
+    callable: src.tools_api.recommend_for_validation
+    parameters:
+      type: object
+      properties:
+        shortlist:
+          type: array
+        approval:
+          type: object
+      required:
+      - shortlist
+      - approval
+policies:
+  permissions:
+    type: function
+    handler: src.permissions.make_permission_policy
+    factory_params:
+      agent: safety

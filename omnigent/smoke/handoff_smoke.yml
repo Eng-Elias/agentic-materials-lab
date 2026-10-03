@@ -1,0 +1,44 @@
+# T002 two-agent smoke test: echo one schema-shaped Handoff between a caller
+# and a validator sub-agent. Run once Omnigent is installed:
+#   omnigent run omnigent/smoke/handoff_smoke.yml -p "exchange the example handoff"
+# PASS = the validator returns VALIDATION: ok with the payload echoed back.
+name: handoff_smoke
+instructions: |
+  Send exactly this JSON to the validator and report its verdict:
+  {"run_id":"smoke","round":0,"from_agent":"planner","to_agent":"runner",
+   "payload":{"round":1,"strategy":"exploit","batch_ids":["A"],"rationale":"r",
+   "expected_learning":"e","cost":1,
+   "rejected_alternatives":[{"strategy":"explore","reason":"less certain"}]},
+   "citations":[]}
+
+executor:
+  harness: claude-sdk
+  model: databricks-claude-sonnet-4-6
+  auth:
+    type: databricks
+    profile: oss
+
+os_env:
+  type: caller_process
+  cwd: .
+  sandbox:
+    type: none
+
+tools:
+  validate_handoff:
+    type: function
+    description: Validate a Handoff JSON against src/schemas.Handoff
+    callable: omnigent.smoke.callables.validate_handoff
+    parameters:
+      type: object
+      properties:
+        message:
+          type: object
+      required: [message]
+  validator:
+    type: agent
+    description: Validate the received JSON using validate_handoff and reply VALIDATION: ok|error
+    prompt: Use the validate_handoff tool on the received JSON and reply.
+    executor: {harness: claude-sdk, model: databricks-claude-sonnet-4-6}
+    os_env: inherit
+    max_sessions: 1

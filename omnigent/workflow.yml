@@ -1,0 +1,86 @@
+# Omnigent orchestrator: Agentic Materials Discovery Lab
+# Run:  omnigent run omnigent/workflow.yml -p "run one discovery round"
+# Syntax per docs/AGENT_YAML_SPEC.md (omnigent-ai/omnigent).
+# Loop: literature -> insight -> planner -> runner -> analysis -> record
+# Safety observes everything; the recommend step is approval-gated.
+name: discovery_orchestrator
+instructions: |
+  You orchestrate a closed-loop materials discovery workflow over 7 specialist
+  sub-agents. Each round: call literature (only on round 1 or when hypotheses
+  need re-grounding), insight (round 1), then per round: planner, runner,
+  analysis, record. Every message between agents MUST be a JSON object matching
+  src/schemas.py Handoff. Never invent citations, labels, or labels-adjacent
+  statistics. The planner MUST present at least two scored strategies and name
+  the rejected one with a reason. After analysis, if a hypothesis is refuted,
+  the next planner call must reflect the recommended switch. Never call the
+  safety agent's recommend_for_validation without an approval decision marked
+  approved. Log every handoff through the record agent.
+
+executor:
+  harness: claude-sdk
+  model: databricks-claude-sonnet-4-6
+  auth:
+    type: databricks
+    profile: oss
+
+os_env:
+  type: caller_process
+  cwd: .
+  sandbox:
+    type: none
+
+tools:
+  literature:
+    type: agent
+    description: Return cited literature claims on band-gap predictors.
+    prompt: Follow agents/literature.md exactly.
+    executor: {harness: claude-sdk, model: databricks-claude-sonnet-4-6}
+    os_env: inherit
+    max_sessions: 1
+  insight:
+    type: agent
+    description: Propose labeled AGENT-GENERATED hypotheses from literature claims.
+    prompt: Follow agents/insight.md exactly.
+    executor: {harness: claude-sdk, model: databricks-claude-sonnet-4-6}
+    os_env: inherit
+    max_sessions: 1
+  planner:
+    type: agent
+    description: Score >=2 strategies, pick one, record rejected alternatives.
+    prompt: Follow agents/planner.md exactly.
+    executor: {harness: claude-sdk, model: databricks-claude-sonnet-4-6}
+    os_env: inherit
+    max_sessions: 2
+  runner:
+    type: agent
+    description: Execute the experiment batch via the oracle.
+    prompt: Follow agents/runner.md exactly.
+    executor: {harness: claude-sdk, model: databricks-claude-sonnet-4-6}
+    os_env: inherit
+    max_sessions: 1
+  analysis:
+    type: agent
+    description: Interpret results, issue hypothesis verdicts, recommend strategy.
+    prompt: Follow agents/analysis.md exactly.
+    executor: {harness: claude-sdk, model: databricks-claude-sonnet-4-6}
+    os_env: inherit
+    max_sessions: 1
+  record:
+    type: agent
+    description: Append validated handoffs to the research log.
+    prompt: Follow agents/record.md exactly.
+    executor: {harness: claude-sdk, model: databricks-claude-sonnet-4-6}
+    os_env: inherit
+    max_sessions: 1
+  safety:
+    type: agent
+    description: Gate consequential actions on human approval.
+    prompt: Follow agents/safety.md exactly.
+    executor: {harness: claude-sdk, model: databricks-claude-sonnet-4-6}
+    os_env: inherit
+    max_sessions: 1
+
+policies:
+  approval_guard:
+    type: function
+    handler: src.permissions.make_approval_policy

@@ -1,0 +1,34 @@
+name: analysis_agent
+instructions: ../../agents/analysis.md
+executor:
+  harness: claude-sdk
+  model: databricks-claude-sonnet-4-6
+  auth:
+    type: databricks
+    profile: oss
+os_env:
+  type: caller_process
+  cwd: ../../
+  sandbox:
+    type: none
+tools:
+  read_results:
+    type: function
+    description: run history
+    callable: src.tools_api.read_results
+    parameters:
+      type: object
+      properties: {}
+  read_stats:
+    type: function
+    description: pool stats
+    callable: src.tools_api.read_stats
+    parameters:
+      type: object
+      properties: {}
+policies:
+  permissions:
+    type: function
+    handler: src.permissions.make_permission_policy
+    factory_params:
+      agent: analysis

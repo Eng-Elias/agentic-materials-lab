@@ -1,0 +1,40 @@
+name: planner_agent
+instructions: ../../agents/planner.md
+executor:
+  harness: claude-sdk
+  model: databricks-claude-sonnet-4-6
+  auth:
+    type: databricks
+    profile: oss
+os_env:
+  type: caller_process
+  cwd: ../../
+  sandbox:
+    type: none
+tools:
+  query_surrogate:
+    type: function
+    description: predictions+uncertainty for candidates
+    callable: src.tools_api.query_surrogate
+    parameters:
+      type: object
+      properties:
+        candidate_ids:
+          type: array
+          items:
+            type: string
+      required:
+      - candidate_ids
+  read_budget:
+    type: function
+    description: budget remaining
+    callable: src.tools_api.read_budget
+    parameters:
+      type: object
+      properties: {}
+policies:
+  permissions:
+    type: function
+    handler: src.permissions.make_permission_policy
+    factory_params:
+      agent: planner

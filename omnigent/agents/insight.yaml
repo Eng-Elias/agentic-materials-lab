@@ -1,0 +1,34 @@
+name: insight_agent
+instructions: ../../agents/insight.md
+executor:
+  harness: claude-sdk
+  model: databricks-claude-sonnet-4-6
+  auth:
+    type: databricks
+    profile: oss
+os_env:
+  type: caller_process
+  cwd: ../../
+  sandbox:
+    type: none
+tools:
+  read_stats:
+    type: function
+    description: read stats as insight
+    callable: src.tools_api.read_stats
+    parameters:
+      type: object
+      properties: {}
+  read_lit:
+    type: function
+    description: read cached literature citations
+    callable: src.tools_api.read_lit
+    parameters:
+      type: object
+      properties: {}
+policies:
+  permissions:
+    type: function
+    handler: src.permissions.make_permission_policy
+    factory_params:
+      agent: insight
