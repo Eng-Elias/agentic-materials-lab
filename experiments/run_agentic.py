@@ -40,8 +40,12 @@ HYPOTHESES = [
 ]
 
 MISLEADING_H1 = dict(HYPOTHESES[0])
-MISLEADING_H1["statement"] = ("Designed-misleading rule: electronegativity spread ALONE fully determines "
-                              "the in-window probability; exploit greedily by predicted value purity.")
+MISLEADING_H1.update(
+    statement=("Designed-misleading rule (AGENT-GENERATED): SMALL electronegativity difference alone "
+               "(near-covalent bonding) determines membership in the band-gap window; exploit by "
+               "selecting minimal Magpie 'range Electronegativity'."),
+    testable_feature_set=["MagpieData range Electronegativity"],
+    predicted_direction="negative")
 
 
 def handoff(rec: ResearchRecord, run_id: str, seed: int, round_no: int,
@@ -93,7 +97,8 @@ def run_seed(cfg: RunConfig, seed: int, backend: str, use_cache: str,
         raise NotImplementedError(
             "backend='omnigent' pending T002 smoke test; use --backend engine")
 
-    run_id = f"agentic-seed{seed}"
+    arm = "refutation" if refutation_demo else "ablation" if no_analysis else "agentic"
+    run_id = f"{arm}-seed{seed}"
     oracle = Oracle(labels, budget=cfg.budget)
     surrogate = Surrogate(seed=seed)
     batch = cfg.batch_size
@@ -101,6 +106,8 @@ def run_seed(cfg: RunConfig, seed: int, backend: str, use_cache: str,
     history: list[dict] = []
     verdicts: list[HypothesisVerdict] = []
     recommendation = None
+    h1_refuted = False
+    refute_reason = ""
 
     hyps = [Hypothesis(**h) for h in ([MISLEADING_H1] + HYPOTHESES[1:] if refutation_demo else HYPOTHESES)]
     claims = literature_agent()
@@ -118,7 +125,7 @@ def run_seed(cfg: RunConfig, seed: int, backend: str, use_cache: str,
     seed_ids = list(rng.choice(pool_ids, size=batch, replace=False))
     observed: dict[str, float] = dict(oracle.reveal(seed_ids))
     surrogate.fit(X.loc[seed_ids], pd.Series(observed))
-    rows.append(_row(seed, 0, oracle, top_set, "random_seed", np.nan, no_analysis))
+    rows.append(_row(seed, 0, oracle, top_set, "random_seed", np.nan, arm))
     history.append({"round": 0, "hits": oracle.hits_found(top_set),
                     "rate": rr0_rate(oracle, top_set, batch)})
 
@@ -131,8 +138,9 @@ def run_seed(cfg: RunConfig, seed: int, backend: str, use_cache: str,
                                surrogate, X, candidates, cfg, k)
         ranked = sorted(scores, key=lambda s: -scores[s])
         chosen = ranked[0]
+        h1_guided = refutation_demo and not h1_refuted
         if refutation_demo:
-            chosen = "exploit" if recommendation not in ("switch_to_hybrid", "switch_to_explore") else "hybrid"
+            chosen = "exploit" if h1_guided else "hybrid"
         elif no_analysis:
             chosen = ranked[0]
         elif recommendation == "switch_to_hybrid":
@@ -145,9 +153,17 @@ def run_seed(cfg: RunConfig, seed: int, backend: str, use_cache: str,
                                 if s == ranked[0] and s != chosen else
                                 f"score {scores[s]:.2f} not above chosen {scores[chosen]:.2f}")}
                     for s in ranked if s != chosen][:2]
-        spec = ExperimentSpec(round=round_no, strategy=chosen, batch_ids=acquire(chosen, candidates, surrogate, X, cfg.gap_min, cfg.gap_max, k),
-                              rationale=("Analysis recommends switch" if recommendation and not no_analysis
-                                         else "max expected learning score"),
+        if h1_guided:
+            feat = MISLEADING_H1["testable_feature_set"][0]
+            batch_ids = list(X.loc[candidates, feat].nsmallest(k).index)
+            rationale = f"exploit guided by top Insight hypothesis H1 (min {feat})"
+        else:
+            batch_ids = acquire(chosen, candidates, surrogate, X, cfg.gap_min, cfg.gap_max, k)
+            rationale = ("switch to hybrid: H1 REFUTED — " + refute_reason if refutation_demo and h1_refuted
+                         else "Analysis recommends switch" if recommendation and not no_analysis
+                         else "max expected learning score")
+        spec = ExperimentSpec(round=round_no, strategy=chosen, batch_ids=batch_ids,
+                              rationale=rationale,
                               expected_learning=f"expected in-window hits proxy {scores[chosen]:.2f}",
                               cost=k, rejected_alternatives=[{"strategy": r["strategy"], "reason": r["reason"]} for r in rejected])
         handoff(rec, run_id, seed, round_no, "planner", "runner", spec, used_citation_ids[:4])
@@ -166,14 +182,18 @@ def run_seed(cfg: RunConfig, seed: int, backend: str, use_cache: str,
 
         history.append({"round": round_no, "hits": rr.cumulative_hits,
                         "rate": rr.hits_in_batch / max(1, len(rr.batch_ids))})
-        rows.append(_row(seed, round_no, oracle, top_set, chosen, rmse, no_analysis))
+        rows.append(_row(seed, round_no, oracle, top_set, chosen, rmse, arm))
 
         if no_analysis:
             verdicts, recommendation = [], None
         else:
-            analysis = analyze(history, hyps, len(top_set) / len(labels), run_id, seed)
+            analysis = analyze(history, hyps, len(top_set) / len(labels), run_id, seed,
+                               already_refuted=h1_refuted)
             verdicts = analysis.hypothesis_verdicts
             recommendation = analysis.strategy_recommendation
+            if any(v.id == "H1" and v.verdict == "refuted" for v in verdicts):
+                h1_refuted = True
+                refute_reason = analysis.reason
             handoff(rec, run_id, seed, round_no, "analysis", "planner", analysis, used_citation_ids[-2:])
     return rows
 
@@ -182,16 +202,18 @@ def rr0_rate(oracle, top_set, batch) -> float:
     return oracle.hits_found(top_set) / max(1, batch)
 
 
-def analyze(history, hyps, baseline_rate: float, run_id: str, seed: int) -> AnalysisVerdict:
+def analyze(history, hyps, baseline_rate: float, run_id: str, seed: int,
+            already_refuted: bool = False) -> AnalysisVerdict:
     late = [h for h in history if h["round"] >= 1][-2:]
-    refuted = len(late) == 2 and all(h["rate"] <= baseline_rate for h in late)
+    refuted = already_refuted or (len(late) == 2 and all(h["rate"] <= baseline_rate for h in late))
     verdicts = []
     for h in hyps:
         if refuted and h.id == "H1":
-            verdicts.append(HypothesisVerdict(
-                id="H1", verdict="refuted",
-                evidence=(f"guided-arm hit rate {[round(h['rate'],3) for h in late]} at/below random baseline "
-                          f"{baseline_rate:.3f} for 2 consecutive rounds")))
+            evidence = ("guided-arm hit rate " + str([round(h["rate"], 3) for h in late])
+                        + f" at/below random baseline {baseline_rate:.3f} for 2 consecutive rounds"
+                        if not already_refuted else
+                        "H1 remains REFUTED (refutation is terminal); prior evidence stands")
+            verdicts.append(HypothesisVerdict(id="H1", verdict="refuted", evidence=evidence))
         elif refuted and h.id == "H3":
             verdicts.append(HypothesisVerdict(
                 id="H3", verdict="supported",
@@ -205,8 +227,8 @@ def analyze(history, hyps, baseline_rate: float, run_id: str, seed: int) -> Anal
                 if refuted else "hit rate tracking expectations"))
 
 
-def _row(seed: int, round_no: int, oracle: Oracle, top_set, strategy: str, rmse, ablation: bool) -> dict:
-    return {"arm": "ablation" if ablation else "agentic", "seed": seed, "round": round_no,
+def _row(seed: int, round_no: int, oracle: Oracle, top_set, strategy: str, rmse, arm: str) -> dict:
+    return {"arm": arm, "seed": seed, "round": round_no,
             "evaluations": oracle.count_revealed(), "cumulative_hits": oracle.hits_found(top_set),
             "rmse": rmse, "strategy": strategy}
 
@@ -244,15 +266,16 @@ def main():
     out_dir = Path(cfg.out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
 
+    log_path = Path("records/refutation_example.jsonl" if args.refutation_demo
+                    else "records/research_log.jsonl")
+    log_path.unlink(missing_ok=True)
     all_rows = []
     for seed in range(cfg.seeds):
-        rec = ResearchRecord("records/research_log.jsonl")
-        if args.refutation_demo:
-            rec = ResearchRecord(f"records/refutation_example.jsonl")
+        rec = ResearchRecord(log_path)
         rows = run_seed(cfg, seed, args.backend, args.use_cache,
                         args.no_analysis, args.refutation_demo, X, labels, top_set, rec)
         df = pd.DataFrame(rows)
-        name = "ablation" if args.no_analysis else "agentic"
+        name = "refutation" if args.refutation_demo else "ablation" if args.no_analysis else "agentic"
         df.to_csv(out_dir / f"{name}_seed{seed}.csv", index=False)
         final = df.iloc[-1]
         print(f"seed={seed} evals={int(final.evaluations)} hits={int(final.cumulative_hits)} "

@@ -102,8 +102,8 @@
 
 **Independent Test**: `python experiments/run_agentic.py --refutation-demo` writes `records/refutation_example.jsonl` with refuted verdict after two consecutive at/below-random rounds and subsequent strategy change (quickstart Scenario 4)
 
-- [ ] T028 [US3] Implement the seeded scenario in `src/refutation.py` (or `experiments/run_agentic.py --refutation-demo` branch): force Insight's top hypothesis to the electronegativity-difference-only rule; Analysis refutes when hit rate ≤ random baseline for 2 consecutive rounds (evidence string with both rates); Planner MUST switch to hybrid or explore next round and log reason; everything under fixed seed with cached LLM outputs
-- [ ] T029 [US3] Run the scenario; if the refutation never triggers naturally after one tuning pass, keep the forced variant and record in README that the moment is a designed scenario (constitution honesty); produce the hits curve segment showing pre/post-switch rates
+- [x] T028 [US3] Implement the seeded scenario in `src/refutation.py` (or `experiments/run_agentic.py --refutation-demo` branch): force Insight's top hypothesis to the electronegativity-difference-only rule; Analysis refutes when hit rate ≤ random baseline for 2 consecutive rounds (evidence string with both rates); Planner MUST switch to hybrid or explore next round and log reason; everything under fixed seed with cached LLM outputs
+- [x] T029 [US3] Run the scenario; if the refutation never triggers naturally after one tuning pass, keep the forced variant and record in README that the moment is a designed scenario (constitution honesty); produce the hits curve segment showing pre/post-switch rates
 
 **Checkpoint**: AC-3 satisfied; `records/refutation_example.jsonl` committed
 
