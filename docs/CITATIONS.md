@@ -38,5 +38,19 @@ via `src/tools_lit.py`.
 
 ## Audit status
 
-Spot-checked lit_001 and the 2024 DRL inverse-design entry: both DOIs resolve (HTTP 200).
-Full click-check of every entry is task T034 (Phase 8).
+**T034 audit complete (2026-10-04).** All 14 unique DOIs across `records/*.jsonl`
+(lit_001–lit_010) and this file verified:
+
+- Every DOI returns 302 (registered) at doi.org.
+- 11 resolve end-to-end with HTTP 200 at the publisher landing page.
+- 3 (10.1155/er/9974355, 10.26434/chemrxiv-2022-blkmp, 10.26434/chemrxiv-2024-kt165)
+  return 403 only due to publisher bot-blocking (Wiley/ChemRxiv Cloudflare);
+  all three confirmed as real registered works via the Crossref API with
+  titles matching the cached claims.
+- Titles for all 14 verified against Crossref/DataCite registry metadata.
+- No citations removed.
+
+Known duplicate: records lit_008 (10.26434/chemrxiv-2024-kt165) and lit_010
+(10.48550/arxiv.2407.18731) are the ChemRxiv and arXiv versions of the same
+paper ("Exploring Quantum Active Learning for Materials Design and Discovery").
+Both DOIs are valid; flagged here for transparency rather than removed.

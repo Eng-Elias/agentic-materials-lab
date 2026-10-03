@@ -128,7 +128,7 @@
 - [x] T031 Run `python experiments/run_agentic.py --seeds 10 --use-cache cache/` (LLM outputs cached; seeds parallelizable if time allows)
 - [x] T032 [P] Run ablation `python experiments/run_agentic.py --seeds 10 --no-analysis` producing `results/ablation.csv` (planner receives no Analysis feedback; strategy held at round-1 choice)
 - [x] T033 Produce final artifacts via analyze_results.py: `results/curves.png` (all 5 arms, mean ± std) and `results/summary.csv` (evals-per-hit-milestone and matched-count speedup mean±std per arm incl. ablation); numbers reported EXACTLY as measured
-- [ ] T034 Citation audit: open every DOI/URL in records + docs/CITATIONS.md, confirm resolution, remove or re-fetch any that fail
+- [x] T034 Citation audit: open every DOI/URL in records + docs/CITATIONS.md, confirm resolution, remove or re-fetch any that fail
 
 ---
 
