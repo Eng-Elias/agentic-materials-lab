@@ -1,7 +1,7 @@
 .venv/
 __pycache__/
 *.pyc
-cache/lit/*.json
+# cache/lit/*.json  (committed: anti-hallucination ground truth)
 cache/llm/*.json
 cache/dft_3d.pkl
 results/*.csv
