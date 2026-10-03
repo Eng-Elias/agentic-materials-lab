@@ -1,0 +1,32 @@
+# Tool permissions per agent. Enforcement: src/permissions.py allows a tool call
+# only if the (agent, tool) pair appears here. This file is the single source of
+# truth mirrored by omnigent/workflow.yml.
+version: 1
+principles:
+  - "Principle II (Oracle Integrity): only runner may reach the oracle"
+  - "Principle V (Human Approval): recommend_for_validation lives only under safety, post-approval"
+
+tools:
+  search_lit: "query OpenAlex/arXiv via src/tools_lit.py (disk-cached)"
+  read_stats: "read dataset summary statistics (never raw labels)"
+  read_lit: "read literature agent output / citation cache"
+  query_surrogate: "surrogate predictions + uncertainty over candidates"
+  read_budget: "budget_remaining() and counts (never labels)"
+  oracle_reveal: "Oracle.reveal(ids) — the ONLY label access path"
+  train_surrogate: "fit surrogate on revealed (features, labels)"
+  read_results: "read run results / hit-rate history"
+  append_record: "append-only write to records/research_log.jsonl"
+  request_approval: "raise an ApprovalRequest to a human"
+  recommend_for_validation: "recommend final candidates for synthesis/DFT"
+
+permissions:
+  literature: [search_lit]
+  insight: [read_stats, read_lit]
+  planner: [query_surrogate, read_budget]
+  runner: [oracle_reveal, train_surrogate]
+  analysis: [read_results, read_stats]
+  record: [append_record]
+  safety: [request_approval, recommend_for_validation]
+  scientist: [request_approval]
+
+deny_all_others: true

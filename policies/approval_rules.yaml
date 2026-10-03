@@ -1,0 +1,32 @@
+# Actions that ALWAYS require human approval before any side effect.
+# Matches schemas.ApprovalRequest.action enum exactly.
+version: 1
+gated_actions:
+  recommend_for_validation:
+    description: "recommend a final candidate shortlist for real synthesis or DFT validation"
+    trigger: "a shortlist is produced and marked final"
+    required_fields: [action, justification]
+    decision_fields: [action, approved, approver]
+    on_deny: "no side effects; workflow continues without the shortlist"
+    on_approve: "safety emits the recommendation; request and decision are logged"
+
+  budget_increase:
+    description: "request any evaluation budget above the configured total (default 300)"
+    trigger: "anything requests a budget larger than the configured value"
+    required_fields: [action, justification]
+    decision_fields: [action, approved, approver]
+    on_deny: "budget stays fixed; the experiment ends at 300"
+    on_approve: "new budget written to run config only for the remaining rounds; logged"
+
+  report_uncited_claim:
+    description: "report a claim without a resolvable citation as fact"
+    trigger: "any output about to be reported that references a claim lacking citation"
+    required_fields: [action, justification]
+    decision_fields: [action, approved, approver]
+    on_deny: "claim is dropped or re-labeled as unverified speculation"
+    on_approve: "claim marked explicitly as human-approved-uncited in the record"
+
+policy:
+  enforcement: structural   # permission layer + Omnigent policies; prompts are not enforcement
+  default_when_unclear: deny
+  audit: "both ApprovalRequest and ApprovalDecision appended to records/research_log.jsonl"
