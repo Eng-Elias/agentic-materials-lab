@@ -1,0 +1,11 @@
+jarvis-tools
+matminer
+scikit-learn
+lightgbm
+pydantic
+pandas
+numpy
+matplotlib
+requests
+duckdb
+pytest
