@@ -10,6 +10,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from src.config import RunConfig
 from src.data import load_pool
+from src.llm import complete as llm_complete
 from src.oracle import Oracle
 from src.record import ResearchRecord
 from src.schemas import (
@@ -108,10 +109,21 @@ def run_seed(cfg: RunConfig, seed: int, backend: str, use_cache: str,
     recommendation = None
     h1_refuted = False
     refute_reason = ""
+    held_strategy = None  # ablation: strategy frozen at round-1 choice
 
-    hyps = [Hypothesis(**h) for h in ([MISLEADING_H1] + HYPOTHESES[1:] if refutation_demo else HYPOTHESES)]
     claims = literature_agent()
     used_citation_ids = sorted({c.id for c in claims})
+
+    # Insight hypotheses via the LLM-completion interface; the engine backend
+    # supplies a deterministic completion until the omnigent backend lands (T002).
+    hyps_data = [MISLEADING_H1] + HYPOTHESES[1:] if refutation_demo else HYPOTHESES
+    prompt = ("Given literature claims " + str(used_citation_ids) +
+              ", propose testable hypotheses for the band-gap discovery task. "
+              f"refutation_demo={refutation_demo}")
+    res = llm_complete("insight", model="deterministic-engine-v1", prompt=prompt,
+                       seed=seed, cache_dir=Path(use_cache) / "llm",
+                       backend=lambda a, p: json.dumps(hyps_data))
+    hyps = [Hypothesis(**h) for h in json.loads(res["output"])]
 
     from src.schemas import LiteratureClaims, InsightHypotheses
     handoff(rec, run_id, seed, 0, "literature", "insight",
@@ -142,7 +154,9 @@ def run_seed(cfg: RunConfig, seed: int, backend: str, use_cache: str,
         if refutation_demo:
             chosen = "exploit" if h1_guided else "hybrid"
         elif no_analysis:
-            chosen = ranked[0]
+            if held_strategy is None:
+                held_strategy = ranked[0]
+            chosen = held_strategy
         elif recommendation == "switch_to_hybrid":
             chosen = "hybrid"
         elif recommendation == "switch_to_explore":
