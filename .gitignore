@@ -9,3 +9,4 @@ results/*.png
 results/shortlist.json
 records/refutation_example.jsonl
 docs/data_fields_probe.txt
+cache/features_*.pkl
