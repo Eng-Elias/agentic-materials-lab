@@ -47,7 +47,9 @@ except by id.
 | testable_feature_set | list[str] | must be subsets of available features |
 | predicted_direction | Literal["positive", "negative"] | — |
 | supporting_citation_ids | list[str] | ≥1, must exist in current run's citations |
-| verdict | Literal["supported", "refuted", "inconclusive"] | starts "inconclusive" |
+
+Verdicts are NOT a Hypothesis field — they live in `AnalysisVerdict.hypothesis_verdicts`
+(per-run evidence, not hypothesis identity).
 
 ## ExperimentSpec (Planner → Runner)
 
