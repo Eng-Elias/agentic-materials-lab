@@ -65,3 +65,23 @@ Declares agents, allowed tools per agent (mirroring `policies/tool_permissions.y
 edges (Literature→Insight→Planner→Runner→Analysis→Record; Safety observes all), and the
 approval hook for the three gated actions. Validated by Omnigent's own loader; additionally
 checked in CI-style validation that permitted tool lists match the policy file exactly.
+
+## LLM provider environment (`src/llm.py`)
+
+`run_agentic.py` routes Insight hypothesis generation and Planner rationale text through
+`llm.complete(...)`, which is cache-first (`cache/llm/`, key = sha256(agent|model|seed|prompt)).
+The provider is selected entirely by environment:
+
+| Variable | Values / default |
+|---|---|
+| `LLM_PROVIDER` | `engine` (default; deterministic, no network) \| `openai` \| `anthropic` |
+| `LLM_MODEL` | model name, required for real providers |
+| `LLM_BASE_URL` | endpoint override; `openai` defaults to `https://api.openai.com/v1`, `anthropic` to `https://api.anthropic.com` |
+| `LLM_API_KEY` | shared key; falls back to `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` |
+| `OPENAI_BASE_URL`, `ANTHROPIC_BASE_URL` | provider-specific base URL overrides |
+
+`openai` accepts any OpenAI-compatible `/chat/completions` endpoint (OpenAI, Databricks
+model serving, vLLM, Ollama, Azure with adapter). Strategy decisions, budgets, and
+refutation detection stay deterministic in all modes; only hypothesis text and planner
+rationale come from the model. Cached entries record the producing `model` so engine and
+real-provider outputs are never conflated.

@@ -10,7 +10,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from src.config import RunConfig
 from src.data import load_pool
-from src.llm import complete as llm_complete
+from src.llm import complete as llm_complete, provider_from_env
 from src.oracle import Oracle
 from src.record import ResearchRecord
 from src.schemas import (
@@ -75,6 +75,23 @@ def literature_agent(cache_dir: str = "cache/lit"):
     return claims
 
 
+def _parse_hypotheses(output: str, fallback: list[dict]) -> list[Hypothesis]:
+    """Parse LLM output into validated Hypothesis objects; fall back to the
+    deterministic set if the model returns unparseable/invalid JSON."""
+    text = output.strip()
+    if text.startswith("```"):
+        text = text.strip("`").split("\n", 1)[-1].rsplit("```", 1)[0]
+    try:
+        data = json.loads(text)
+        hyps = [Hypothesis(**{**h, "label": "AGENT-GENERATED"}) for h in data]
+        if not hyps:
+            raise ValueError("empty hypothesis list")
+        return hyps
+    except (json.JSONDecodeError, ValueError, TypeError) as e:
+        print(f"  warning: insight output invalid ({e}); using deterministic hypotheses")
+        return [Hypothesis(**h) for h in fallback]
+
+
 def planner_score(strategies, surrogate, X, candidates, cfg, k) -> dict[str, float]:
     scores = {}
     for s in strategies:
@@ -113,17 +130,26 @@ def run_seed(cfg: RunConfig, seed: int, backend: str, use_cache: str,
 
     claims = literature_agent()
     used_citation_ids = sorted({c.id for c in claims})
+    provider, llm_model, real_backend = provider_from_env()
+    print(f"  llm provider={provider} model={llm_model}")
 
-    # Insight hypotheses via the LLM-completion interface; the engine backend
-    # supplies a deterministic completion until the omnigent backend lands (T002).
+    # Insight hypotheses via the LLM interface. engine backend returns the
+    # deterministic hypothesis set; refutation_demo always injects the
+    # designed-misleading H1 regardless of provider.
     hyps_data = [MISLEADING_H1] + HYPOTHESES[1:] if refutation_demo else HYPOTHESES
-    prompt = ("Given literature claims " + str(used_citation_ids) +
-              ", propose testable hypotheses for the band-gap discovery task. "
-              f"refutation_demo={refutation_demo}")
-    res = llm_complete("insight", model="deterministic-engine-v1", prompt=prompt,
-                       seed=seed, cache_dir=Path(use_cache) / "llm",
-                       backend=lambda a, p: json.dumps(hyps_data))
-    hyps = [Hypothesis(**h) for h in json.loads(res["output"])]
+    prompt = (
+        f"You are the Insight agent in a materials-discovery loop screening a "
+        f"composition-feature pool for band gap in [{cfg.gap_min}, {cfg.gap_max}] eV. "
+        f"Literature claims available: {used_citation_ids}. Propose 3 testable "
+        "hypotheses as a JSON array of objects with keys: id, label, statement, "
+        "testable_feature_set, predicted_direction, supporting_citation_ids. "
+        "label must be 'AGENT-GENERATED'. Return only the JSON array.")
+    backend = real_backend if (real_backend and not refutation_demo) else \
+        (lambda a, p: json.dumps(hyps_data))
+    res = llm_complete("insight", model=llm_model if real_backend and not refutation_demo
+                       else "deterministic-engine-v1", prompt=prompt,
+                       seed=seed, cache_dir=Path(use_cache) / "llm", backend=backend)
+    hyps = _parse_hypotheses(res["output"], hyps_data)
 
     from src.schemas import LiteratureClaims, InsightHypotheses
     handoff(rec, run_id, seed, 0, "literature", "insight",
@@ -176,6 +202,13 @@ def run_seed(cfg: RunConfig, seed: int, backend: str, use_cache: str,
             rationale = ("switch to hybrid: H1 REFUTED — " + refute_reason if refutation_demo and h1_refuted
                          else "Analysis recommends switch" if recommendation and not no_analysis
                          else "max expected learning score")
+        if real_backend and not refutation_demo:
+            rr_prompt = (f"Planner round {round_no}: strategy scores { {s: round(v,3) for s,v in scores.items()} }, "
+                         f"chose '{chosen}'. Write one sentence of rationale citing the "
+                         "highest-scoring alternatives considered.")
+            rationale = llm_complete("planner", model=llm_model, prompt=rr_prompt, seed=seed,
+                                     cache_dir=Path(use_cache) / "llm",
+                                     backend=real_backend)["output"].strip()[:300]
         spec = ExperimentSpec(round=round_no, strategy=chosen, batch_ids=batch_ids,
                               rationale=rationale,
                               expected_learning=f"expected in-window hits proxy {scores[chosen]:.2f}",
