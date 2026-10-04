@@ -136,7 +136,7 @@
 
 **Purpose**: Packaging, README honesty, demo; features frozen (constitution hour-19 gate)
 
-- [ ] T035 [P] Write `README.md`: question, bottleneck, method, agent table (decision/tools/I-O), approval gates & policies, results ONLY from `results/summary.csv` (embed `results/curves.png`), the designed refutation example description, limitations (retrospective benchmark, proxy oracle, composition features only, designed scenario), validation still needed (DFT then wet lab), next experiment, path-to-10x section, one-command reproduction
+- [x] T035 [P] Write `README.md`: question, bottleneck, method, agent table (decision/tools/I-O), approval gates & policies, results ONLY from `results/summary.csv` (embed `results/curves.png`), the designed refutation example description, limitations (retrospective benchmark, proxy oracle, composition features only, designed scenario), validation still needed (DFT then wet lab), next experiment, path-to-10x section, one-command reproduction
 - [ ] T036 [P] Write `demo/script.md` per PLAN.md §9 timing table (0:00 question → 0:15 Omnigent handoffs → 0:40 reveal + budget → 1:05 refutation + switch → 1:30 speedup curve → 1:50 approval gate + next step)
 - [ ] T037 Verify every handoff in final committed `records/research_log.jsonl` against contracts/handoff.schema.json and run `experiments/replay_log.py` clean
 - [ ] T038 Fresh-clone test exactly as quickstart Scenario 7 (`git clone` to /tmp, venv, pip install, `pytest -q`, `run_baselines.py --quick`); fix any friction
