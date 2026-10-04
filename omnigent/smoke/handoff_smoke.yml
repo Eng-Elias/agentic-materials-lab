@@ -13,10 +13,10 @@ instructions: |
 
 executor:
   harness: claude-sdk
-  model: databricks-claude-sonnet-4-6
+  model: claude-haiku-4-5
   auth:
-    type: databricks
-    profile: oss
+    type: provider
+    name: zen
 
 os_env:
   type: caller_process
@@ -28,7 +28,7 @@ tools:
   validate_handoff:
     type: function
     description: Validate a Handoff JSON against src/schemas.Handoff
-    callable: omnigent.smoke.callables.validate_handoff
+    callable: src.smoke_callables.validate_handoff
     parameters:
       type: object
       properties:
@@ -37,8 +37,8 @@ tools:
       required: [message]
   validator:
     type: agent
-    description: Validate the received JSON using validate_handoff and reply VALIDATION: ok|error
+    description: "Validate the received JSON using validate_handoff and reply VALIDATION: ok|error"
     prompt: Use the validate_handoff tool on the received JSON and reply.
-    executor: {harness: claude-sdk, model: databricks-claude-sonnet-4-6}
+    executor: {harness: claude-sdk, model: claude-haiku-4-5, auth: {type: provider, name: zen}}
     os_env: inherit
     max_sessions: 1

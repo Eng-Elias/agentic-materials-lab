@@ -18,10 +18,10 @@ instructions: |
 
 executor:
   harness: claude-sdk
-  model: databricks-claude-sonnet-4-6
+  model: claude-haiku-4-5
   auth:
-    type: databricks
-    profile: oss
+    type: provider
+    name: zen
 
 os_env:
   type: caller_process
@@ -34,49 +34,49 @@ tools:
     type: agent
     description: Return cited literature claims on band-gap predictors.
     prompt: Follow agents/literature.md exactly.
-    executor: {harness: claude-sdk, model: databricks-claude-sonnet-4-6}
+    executor: {harness: claude-sdk, model: claude-haiku-4-5, auth: {type: provider, name: zen}}
     os_env: inherit
     max_sessions: 1
   insight:
     type: agent
     description: Propose labeled AGENT-GENERATED hypotheses from literature claims.
     prompt: Follow agents/insight.md exactly.
-    executor: {harness: claude-sdk, model: databricks-claude-sonnet-4-6}
+    executor: {harness: claude-sdk, model: claude-haiku-4-5, auth: {type: provider, name: zen}}
     os_env: inherit
     max_sessions: 1
   planner:
     type: agent
     description: Score >=2 strategies, pick one, record rejected alternatives.
     prompt: Follow agents/planner.md exactly.
-    executor: {harness: claude-sdk, model: databricks-claude-sonnet-4-6}
+    executor: {harness: claude-sdk, model: claude-haiku-4-5, auth: {type: provider, name: zen}}
     os_env: inherit
     max_sessions: 2
   runner:
     type: agent
     description: Execute the experiment batch via the oracle.
     prompt: Follow agents/runner.md exactly.
-    executor: {harness: claude-sdk, model: databricks-claude-sonnet-4-6}
+    executor: {harness: claude-sdk, model: claude-haiku-4-5, auth: {type: provider, name: zen}}
     os_env: inherit
     max_sessions: 1
   analysis:
     type: agent
     description: Interpret results, issue hypothesis verdicts, recommend strategy.
     prompt: Follow agents/analysis.md exactly.
-    executor: {harness: claude-sdk, model: databricks-claude-sonnet-4-6}
+    executor: {harness: claude-sdk, model: claude-haiku-4-5, auth: {type: provider, name: zen}}
     os_env: inherit
     max_sessions: 1
   record:
     type: agent
     description: Append validated handoffs to the research log.
     prompt: Follow agents/record.md exactly.
-    executor: {harness: claude-sdk, model: databricks-claude-sonnet-4-6}
+    executor: {harness: claude-sdk, model: claude-haiku-4-5, auth: {type: provider, name: zen}}
     os_env: inherit
     max_sessions: 1
   safety:
     type: agent
     description: Gate consequential actions on human approval.
     prompt: Follow agents/safety.md exactly.
-    executor: {harness: claude-sdk, model: databricks-claude-sonnet-4-6}
+    executor: {harness: claude-sdk, model: claude-haiku-4-5, auth: {type: provider, name: zen}}
     os_env: inherit
     max_sessions: 1
 

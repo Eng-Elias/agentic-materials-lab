@@ -2,10 +2,10 @@ name: safety_agent
 instructions: ../../agents/safety.md
 executor:
   harness: claude-sdk
-  model: databricks-claude-sonnet-4-6
+  model: claude-haiku-4-5
   auth:
-    type: databricks
-    profile: oss
+    type: provider
+    name: zen
 os_env:
   type: caller_process
   cwd: ../../
