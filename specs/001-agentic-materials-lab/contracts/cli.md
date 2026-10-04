@@ -81,7 +81,9 @@ The provider is selected entirely by environment:
 | `OPENAI_BASE_URL`, `ANTHROPIC_BASE_URL` | provider-specific base URL overrides |
 
 `openai` accepts any OpenAI-compatible `/chat/completions` endpoint (OpenAI, Databricks
-model serving, vLLM, Ollama, Azure with adapter). Strategy decisions, budgets, and
+model serving, vLLM, Ollama, Azure with adapter) **or** the OpenAI Responses API — set
+`LLM_BASE_URL` to a `.../responses` endpoint (e.g. OpenCode Zen
+`https://opencode.ai/zen/v1/responses`) and it is detected automatically. Strategy decisions, budgets, and
 refutation detection stay deterministic in all modes; only hypothesis text and planner
 rationale come from the model. Cached entries record the producing `model` so engine and
 real-provider outputs are never conflated.

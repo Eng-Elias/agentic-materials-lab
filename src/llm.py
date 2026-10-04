@@ -60,8 +60,25 @@ def complete(agent: str, model: str, prompt: str, seed: int,
 
 def _openai_backend(base_url: str, api_key: str, model: str) -> Backend:
     def call(agent: str, prompt: str) -> str:
+        base = base_url.rstrip("/")
+        if base.endswith("/responses"):
+            # OpenAI Responses API (e.g. OpenCode Zen: .../zen/v1/responses)
+            r = requests.post(
+                base,
+                headers={"Authorization": f"Bearer {api_key}"},
+                json={"model": model,
+                      "instructions": f"You are the {agent} agent.",
+                      "input": prompt},
+                timeout=60)
+            r.raise_for_status()
+            return "".join(
+                c.get("text", "")
+                for item in r.json().get("output", [])
+                if item.get("type") == "message"
+                for c in item.get("content", [])
+                if c.get("type") == "output_text")
         r = requests.post(
-            f"{base_url.rstrip('/')}/chat/completions",
+            f"{base}/chat/completions",
             headers={"Authorization": f"Bearer {api_key}"},
             json={"model": model,
                   "messages": [{"role": "system", "content": f"You are the {agent} agent."},
