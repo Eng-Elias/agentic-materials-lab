@@ -1,4 +1,6 @@
 .venv/
+.env
+!.env.example
 __pycache__/
 *.pyc
 # cache/lit/*.json  (committed: anti-hallucination ground truth)

@@ -28,6 +28,25 @@ Backend = Callable[[str, str], str]  # (agent, prompt) -> completion text
 DEFAULT_MODEL = "deterministic-engine-v1"
 
 
+def _load_dotenv(path: str | Path = ".env") -> None:
+    """Minimal .env loader: KEY=VALUE lines, # comments, no export needed.
+    Existing environment variables win (real env > .env file)."""
+    p = Path(path)
+    if not p.exists():
+        return
+    for line in p.read_text().splitlines():
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        k, _, v = line.partition("=")
+        k, v = k.strip(), v.strip().strip("'\"")
+        if k and k not in os.environ:
+            os.environ[k] = v
+
+
+_load_dotenv()
+
+
 def _key(agent: str, model: str, seed: int, prompt: str) -> str:
     return hashlib.sha256(f"{agent}|{model}|{seed}|{prompt}".encode()).hexdigest()
 
