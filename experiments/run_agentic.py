@@ -75,6 +75,17 @@ def literature_agent(cache_dir: str = "cache/lit"):
     return claims
 
 
+def _direction(value) -> str:
+    """Normalize LLM phrasing ('higher X increases gap', 'positive correlation')
+    to the schema literal."""
+    s = str(value).lower()
+    if "negative" in s or any(w in s for w in ("lower", "decrease", "narrower", "smaller")):
+        return "negative"
+    if "positive" in s or any(w in s for w in ("higher", "increase", "wider", "larger", "greater")):
+        return "positive"
+    raise ValueError(f"cannot normalize direction: {value!r}")
+
+
 def _parse_hypotheses(output: str, fallback: list[dict]) -> list[Hypothesis]:
     """Parse LLM output into validated Hypothesis objects; fall back to the
     deterministic set if the model returns unparseable/invalid JSON."""
@@ -83,7 +94,9 @@ def _parse_hypotheses(output: str, fallback: list[dict]) -> list[Hypothesis]:
         text = text.strip("`").split("\n", 1)[-1].rsplit("```", 1)[0]
     try:
         data = json.loads(text)
-        hyps = [Hypothesis(**{**h, "label": "AGENT-GENERATED"}) for h in data]
+        hyps = [Hypothesis(**{**h, "label": "AGENT-GENERATED",
+                              "predicted_direction": _direction(h.get("predicted_direction"))})
+                for h in data]
         if not hyps:
             raise ValueError("empty hypothesis list")
         return hyps
@@ -143,7 +156,9 @@ def run_seed(cfg: RunConfig, seed: int, backend: str, use_cache: str,
         f"Literature claims available: {used_citation_ids}. Propose 3 testable "
         "hypotheses as a JSON array of objects with keys: id, label, statement, "
         "testable_feature_set, predicted_direction, supporting_citation_ids. "
-        "label must be 'AGENT-GENERATED'. Return only the JSON array.")
+        "label must be 'AGENT-GENERATED'; predicted_direction must be exactly "
+        "'positive' or 'negative'; supporting_citation_ids must be a non-empty "
+        "list of ids from the provided claims. Return only the JSON array.")
     backend = real_backend if (real_backend and not refutation_demo) else \
         (lambda a, p: json.dumps(hyps_data))
     res = llm_complete("insight", model=llm_model if real_backend and not refutation_demo
